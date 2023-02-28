@@ -52,7 +52,7 @@ app = FastAPI()
 async def root_func():
     return {'message': 'this is the root function'}
 
-@app.get('/predict_image')
+@app.post('/predict_image')
 async def upload_image(image: UploadFile):
     try:
         result = predict_image(await image.read())
