@@ -25,7 +25,7 @@ char_map = {
 
 
 # Importing the model
-model = keras.saved_model.load('vgg16/')
+model = tf.saved_model.load('vgg-16')
 
 
 # Function for segmenting the image 
@@ -48,11 +48,11 @@ def predict_image(image):
 # Defining the FastAPI instance here
 app = FastAPI()
 
-@app.root('/')
+@app.get('/')
 async def root_func():
     return {'message': 'this is the root function'}
 
-@app.post('/predict_image')
+@app.get('/predict_image')
 async def upload_image(image: UploadFile):
     try:
         result = predict_image(await image.read())

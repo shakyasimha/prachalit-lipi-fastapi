@@ -21,6 +21,7 @@ keras==2.11.0
 libclang==15.0.6.1
 Markdown==3.4.1
 MarkupSafe==2.1.2
+multipart==0.2.4
 numpy==1.24.2
 oauthlib==3.2.2
 opencv-python==4.7.0.72
