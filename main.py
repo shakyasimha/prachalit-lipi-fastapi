@@ -1,7 +1,8 @@
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, UploadFile, File
 import uvicorn
 import tensorflow as tf
 from tensorflow import keras
+from keras import models
 from PIL import Image
 from io import BytesIO
 import numpy as np
@@ -27,8 +28,11 @@ char_map = {
 
 
 # Importing the model
-model = tf.saved_model.load('vgg-16')
+model = models.load_model('vgg.h5')
 
+
+# Defining the FastAPI instance here
+app = FastAPI()
 
 # Function for reading image
 def file_to_array(data) -> np.ndarray:
@@ -36,41 +40,26 @@ def file_to_array(data) -> np.ndarray:
 
     return image 
 
-# Function for segmenting the image 
-# def segment_image(image):
-
-
-# Function for returning the prediction of image 
-def predict_image(file):
-    # Preprocessing part goes here
-    image = file_to_array(file)
-
-    image = cv2.imread(image)
-    image = cv2.resize(image, IMG_SIZE)
-    # image = image.astype('float32') / 255.0
-    image = np.expand_dims(image, axis=0)
-
-    output = model.predict(image)
-    predicted_class = np.argmax(output)
-
-    return char_map[predicted_class]
-
-# Defining the FastAPI instance here
-app = FastAPI()
 
 @app.get('/')
 async def root_func():
     return {'message': 'this is the root function'}
 
-@app.post('/predict_image')
-async def upload_image(file: UploadFile):
-    try:
-        result = predict_image(await file.read())
-    except Exception as e:
-        print(e) 
-        result = "null"
 
+@app.post('/predict_image')
+async def upload_image(file: UploadFile = File(...)):
+    image  = Image.open(BytesIO(await file.read()))
+
+    image  = cv2.resize(np.array(image), IMG_SIZE)
+    image  = image.astype('float32')
+    image  = np.expand_dims(image, axis=0)
+
+    output = model.predict(image)
+    result = char_map[np.argmax(output)]
+    
     return {'prediction': result}
 
+
+    
 if __name__ == "__main__":
     uvicorn.run(app, host=APP_HOST, port=APP_PORT)
