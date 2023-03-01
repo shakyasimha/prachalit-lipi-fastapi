@@ -2,12 +2,14 @@ from fastapi import FastAPI, UploadFile
 import uvicorn
 import tensorflow as tf
 from tensorflow import keras
+from PIL import Image
+from io import BytesIO
 import numpy as np
 import cv2
 
 # Some constants to be used in the program
 IMG_SIZE = (32,32)
-APP_HOST = '0.0.0.0'
+APP_HOST = '127.0.1.1'
 APP_PORT = '5000'
 
 # Character mapping for the character prediction
@@ -28,13 +30,21 @@ char_map = {
 model = tf.saved_model.load('vgg-16')
 
 
+# Function for reading image
+def file_to_array(data) -> np.ndarray:
+    image = np.array(Image.open(BytesIO(data)))
+
+    return image 
+
 # Function for segmenting the image 
 # def segment_image(image):
 
 
 # Function for returning the prediction of image 
-def predict_image(image):
+def predict_image(file):
     # Preprocessing part goes here
+    image = file_to_array(file)
+
     image = cv2.imread(image)
     image = cv2.resize(image, IMG_SIZE)
     # image = image.astype('float32') / 255.0
@@ -53,14 +63,14 @@ async def root_func():
     return {'message': 'this is the root function'}
 
 @app.post('/predict_image')
-async def upload_image(image: UploadFile):
+async def upload_image(file: UploadFile):
     try:
-        result = predict_image(await image.read())
+        result = predict_image(await file.read())
     except Exception as e:
         print(e) 
         result = "null"
 
     return {'prediction': result}
 
-# if __name__ == "__main__":
-    # uvicorn.run(app, host=APP_HOST, port=APP_PORT)
+if __name__ == "__main__":
+    uvicorn.run(app, host=APP_HOST, port=APP_PORT)
